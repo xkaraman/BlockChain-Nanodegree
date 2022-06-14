@@ -125,7 +125,7 @@ class Blockchain {
             let messageTime = parseInt(message.split(':')[1]);
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
             // Check if in time
-            if ( (messageTime + (1 * 60 * 1000)) < currentTime) {
+            if ( (messageTime + (5 * 60 * 1000)) < currentTime) {
                 reject("Time violation. Must be sumbitted within 5 minutes");
             }
 
