@@ -125,13 +125,13 @@ class Blockchain {
             let messageTime = parseInt(message.split(':')[1]);
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
             // Check if in time
-            if ( (messageTime + (5 * 60 * 1000)) > currentTime) {
-                reject(Error("Time violation. Must be sumbitted within 5 minutes"));
+            if ( (messageTime + (1 * 60 * 1000)) < currentTime) {
+                reject("Time violation. Must be sumbitted within 5 minutes");
             }
 
             let isValid = bitcoinMessage.verify(message, address, signature);
             if (!isValid) {
-                reject(Error("Signature not valid"));
+                reject("Signature not valid");
             }
             let block = new BlockClass.Block({ owner: address, star: star });
             let addedBlock = await self._addBlock(block);

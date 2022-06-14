@@ -62,17 +62,19 @@ class BlockchainController {
                 const message = req.body.message;
                 const signature = req.body.signature;
                 const star = req.body.star;
-                try {
-                    let block = await this.blockchain.submitStar(address, message, signature, star);
-                    if(block){
-                        return res.status(200).json(block);
-                    } else {
-                        return res.status(500).send("An error happened!");
-                    }
-                } catch (error) {
-                    return res.status(500).send(error);
-                }
+                
+                let block = await this.blockchain.submitStar(address, message, signature, star)
+                    .catch(err => console.log(err));
+
+                if (block) {
+                    //console.log("Submitted");
+                    return res.status(200).json(block);
+                } else {
+                    //console.log("An erro happened. NOT Submitted");
+                    return res.status(500).send("An error happened!");
+                }                
             } else {
+                console.log("No baody parameters");
                 return res.status(500).send("Check the Body Parameter!");
             }
         });
