@@ -211,6 +211,11 @@ class Blockchain {
             self.chain.forEach((block) => {
                 promises.push(block.validate());
 
+
+                //Is the following if block really needed? as this will
+                // push twice the errors in errorLog.
+                // Moreover that's what block.validate() does when we waiting 
+                // for results in Promise.all() block, right?
                 if (block.height > 0) {
                     let previousBlockHash = block.previousBlockHash;
                     let blockhash = self.chain[block.height - 1].hash;
@@ -220,7 +225,20 @@ class Blockchain {
                 }
 
             });
+
+            // How can we know the order of completion since it's asynchronous
+            // in order to get the block height that has been tampered
+            Promise.all(promises).then((results) => {
+                results.forEach(isValidBlock => {
+                    if (!isValidBlock) {
+                        errorLog.push('Error - Blocks cant be validated');
+                    }
+            });
             resolve(errorLog);
+            }).catch(err => {
+                console.log(err);
+                reject(err);
+            });
 
         });
     }
