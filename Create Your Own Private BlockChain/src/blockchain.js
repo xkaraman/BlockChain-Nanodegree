@@ -79,11 +79,16 @@ class Blockchain {
             newBlock.time = new Date().getTime().toString().slice(0,-3);
             newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
 
-            this.validateChain();
+            let invalidBlocks = await this.validateChain();
             // Modify Chain
+            if (invalidBlocks.length == 0) {
             self.chain.push(newBlock);
             self.height = self.chain.length - 1;
             resolve(newBlock);
+            } else {
+                reject("Invalid Blocks found");
+            }
+            
         });
     }
 
