@@ -82,9 +82,9 @@ class Blockchain {
             let invalidBlocks = await this.validateChain();
             // Modify Chain
             if (invalidBlocks.length == 0) {
-            self.chain.push(newBlock);
-            self.height = self.chain.length - 1;
-            resolve(newBlock);
+                self.chain.push(newBlock);
+                self.height = self.chain.length - 1;
+                resolve(newBlock);
             } else {
                 reject("Invalid Blocks found");
             }
@@ -233,8 +233,8 @@ class Blockchain {
                     if (!isValidBlock) {
                         errorLog.push('Error - Blocks cant be validated');
                     }
-            });
-            resolve(errorLog);
+                });
+                resolve(errorLog);
             }).catch(err => {
                 console.log(err);
                 reject(err);
