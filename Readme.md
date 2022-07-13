@@ -7,4 +7,4 @@
    3. Deploy to Rinkeby Test Network
    4. Frontend to interact with contract
       
-   ** Techs used: Javascript, NodeJS, Truffle, Ganache, Webpack **
+   **Techs used: Javascript, NodeJS, Truffle, Ganache, Webpack**
