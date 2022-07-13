@@ -9,6 +9,7 @@
 
 ### Dependencies
 Package.json is provided in `app/` folder 
+
 `truffle version` output is
 ```
 Truffle v5.5.21 (core: 5.5.21)
@@ -19,7 +20,7 @@ Web3.js v1.7.4
 ```
 
 This project worked succesfully with following versions, you will need to have: 
-
+```
 ├── copy-webpack-plugin@5.1.2
 ├── dotenv@16.0.1
 ├── openzeppelin-solidity@4.6.0
@@ -28,6 +29,7 @@ This project worked succesfully with following versions, you will need to have:
 ├── webpack-cli@3.3.12
 ├── webpack-dev-server@3.11.3
 └── webpack@4.46.0
+```
 
 ### Run the application
 1. Clean the frontend 
@@ -51,8 +53,8 @@ cd app
 npm run dev
 ```
 
-Once page is loaded and connected to an account, Status label will display deploayed Rinkeby Token Address.
+Once page is loaded and connected to an account, `Status` label will display deploayed Rinkeby Token Address.
 
-You can create a Star by providing name and tokenID and sumbit with `Create Star` button. Status label will inform you about transaction status.
+You can create a Star by providing `name` and `tokenID` and sumbit with `Create Star` button. `Status` label will inform you about transaction status.
 
-You can retrive the name of a Star by providing its tokenID and sumbit with `Look up a Star` button. Status label will also inform you about transaction status.
+You can retrive the name of a Star by providing its `tokenID` and sumbit with `Look up a Star` button. `Status` label will also inform you about transaction status.
