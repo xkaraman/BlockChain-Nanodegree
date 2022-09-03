@@ -1,5 +1,5 @@
 .vs/*
 */*.vs/
-node_modules*
+node_modules*/
 starnotary*/
-BCND-C6-Exercises/*
+BCND-C6-Exercises/
