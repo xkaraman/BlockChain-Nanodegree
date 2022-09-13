@@ -59,6 +59,8 @@ App = {
         /// Find or Inject Web3 Provider
         /// Modern dapp browsers...
         if (window.ethereum) {
+            console.log("window provider")
+
             App.web3Provider = window.ethereum;
             try {
                 // Request account access
@@ -70,11 +72,15 @@ App = {
         }
         // Legacy dapp browsers...
         else if (window.web3) {
+            console.log("legacy provider")
+
             App.web3Provider = window.web3.currentProvider;
         }
         // If no injected web3 instance is detected, fall back to Ganache
         else {
-            App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
+            App.web3Provider = new Web3.providers.HttpProvider('http://localhost:8545');
+            console.log("ganache provider")
+
         }
 
         App.getMetaskAccountID();
@@ -118,10 +124,12 @@ App = {
     },
 
     bindEvents: function() {
+        console.log("handle bind eventclick")
         $(document).on('click', App.handleButtonClick);
     },
 
     handleButtonClick: async function(event) {
+        console.log("handle click")
         event.preventDefault();
 
         App.getMetaskAccountID();
