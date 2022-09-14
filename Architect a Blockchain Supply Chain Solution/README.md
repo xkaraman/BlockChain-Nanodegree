@@ -81,7 +81,7 @@ rinkeby: {
 
 A screenshot showing the result of the UI and interaction with the smart contract can be found in images folder, in the local blockchain!
 
-*** NOTE: Rinkeby testing work until the `Buy Item` function that requires 1 RinkebyETH, that currently the account used did not have the balance, hence it couldn't complete the transactions.***
+*** NOTE: Rinkeby testing work until the `Buy Item` function that requires 1 RinkebyETH, that currently the account used did not have the balance, hence it couldn't complete the transactions. ***
 
 ## Front End
 Run front-end with 
