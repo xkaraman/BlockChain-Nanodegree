@@ -7,6 +7,7 @@ Create a DApp that  can verify the supply chain of coffee from harvesting, packi
 Testing with latest stable releases of Nodejs, Truffle, ganache, web3js
 
 ## Dependencies:
+```
 Truffle v5.5.29 (core: 5.5.29)
 Ganache v7.4.0
 Solidity - 0.8.16 (solc-js)
@@ -17,6 +18,7 @@ Other libraries used include:
 [x] dotenv
 [x] @truffle/contract
 [x] @truffle/hdwallet-provider
+```
 
 ## Diagrams
 
@@ -77,6 +79,7 @@ rinkeby: {
    > total cost:          0.007041852522533928 ETH
 ```
 
+A screenshot showing the result of the UI and interaction with the smart contract can be found in images folder
 ## Front End
 Run front-end with 
 
