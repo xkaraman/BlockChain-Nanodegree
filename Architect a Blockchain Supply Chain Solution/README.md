@@ -1,4 +1,8 @@
+# Ethereum SupplyChain Dapp
+
 # Project write up:
+Create a DApp that  can verify the supply chain of coffee from harvesting, packing to distribution, retailers and consumers.
+
 
 Testing with latest stable releases of Nodejs, Truffle, ganache, web3js
 
@@ -21,6 +25,18 @@ Activity, Class, Sequence and State Diagrams can be found in Diagramas folder
 ## Testing
 1. `ganache -m "mnemonic phrase"` to run a local blockchain
 2. `truffle test` to run tests that test the contracts
+
+## Deploy to local-blockchain
+1. `ganache -m "mnemonic phrase"` to run a local blockchain
+2. Make sure to have network configuration in `truffle-config.js` such as 
+    ```
+    development: {
+     host: "127.0.0.1",     // Localhost (default: none)
+     port: 8545,            // Standard Ethereum port (default: none)
+     network_id: "1337",       // Any network (default: none)
+    },
+    ```
+3. `truffle migrate --reset`
 
 ## Deploy to Rinkeby
 1. Config `truffle-config.js` to include .env with mnemonics phrase and infura keys
@@ -62,5 +78,8 @@ rinkeby: {
 ```
 
 ## Front End
+Run front-end with 
+
+`npm run dev`
 
 Through the front end, one can execute various contract methods. Currently, all methods are called from `App.metamaskAccountID` which is the owner and has all the assigned roles. This of course can be changed and utilize the various roles we implemented.
