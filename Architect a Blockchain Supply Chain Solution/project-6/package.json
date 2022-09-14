@@ -2,7 +2,7 @@
   "name": "supply-chain-E",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/js/app.js",
   "scripts": {
     "dev": "lite-server",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,9 +11,11 @@
   "author": "pk <pkrasam@gmail.com> (https://ipfs.infura.io/ipfs/QmSXiR9Khm3yo1J67nUopvVBxFJ8YGN2fUGZ34Etr3m92x/)",
   "license": "MIT",
   "devDependencies": {
-    "ganache": "^7.4.1",
-    "lite-server": "^2.6.1",
-    "truffle": "^5.5.29",
-    "truffle-assertions": "^0.9.2"
+    "@truffle/contract": "^4.6.0",
+    "lite-server": "^2.6.1"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^2.0.14",
+    "dotenv": "^16.0.2"
   }
 }
