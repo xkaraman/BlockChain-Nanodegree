@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>FlightSurety</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="#">FlightSurety</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+
+    <main class="container">
+
+
+        <div id="display-wrapper" class="top-20"></div>
+
+        <h2> Airline Registration</h2>
+        <div class="row top-20">
+            <label class="form">Register Airlines</label>
+            <input type="text" id="airline_name" placeholder="Give Airline Name">
+            <!-- <input type="text" id="airline-address" style="width: 400px;" placeholder="Airline Address"> -->
+
+            <btn class="btn btn-primary" id="submit-airline">Register Airline</btn>
+        </div>
+
+        <div class="row top-20">
+            <label class="form">Airline Actions</label>
+            <!-- <input type="text" id="airline-fund-address" style="width: 400px;" placeholder="Airline Address"> -->
+            <btn class="btn btn-primary" id="fund-airlines">Fund</btn>
+            <btn class="btn btn-primary" id="vote-airlines" style="margin-left: 10px;">Vote</btn>
+            <btn class="btn btn-primary" id="is-registered" style="margin-left: 10px;">Is Registered</btn>
+            <btn class="btn btn-primary" id="is-funded" style="margin-left: 10px;">Is Funded</btn>
+            <btn class="btn btn-primary" id="is-pending" style="margin-left: 10px;">Is Pending</btn>
+        </div>
+
+        <div class="row top-20">
+            <label class="form">Flight</label> <select type="text" id="flight-number"></select>
+            <btn class="btn btn-primary" id="buy-insurance">Buy insurance</btn>
+            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <btn class="btn btn-primary" id="withdraw-credit">Withdraw credit</btn>
+            <btn class="btn btn-primary" id="get-balance">Get balance</btn>
+        </div>
+    </main>
+
+</body>
+
+</html>
