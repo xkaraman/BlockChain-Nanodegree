@@ -6,6 +6,8 @@ pragma solidity >=0.8.0 <=0.8.17;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "./FlightSuretyData.sol";
+
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
@@ -35,6 +37,11 @@ contract FlightSuretyApp {
     // Registration process
     uint256 AIRLINE_MIN_THRESHOLD = 4;
 
+    mapping(address => bool) multiCalls; // Mapping for storing multi-call addresses
+    address[] multiCallKeys = new address[](0);
+
+    // uint8 AIRLINE_PERCENTAGE = 50; // Must divide by 100 to get 0.5x times the amount
+
     bool private operational = true;
 
     // Airlines
@@ -45,7 +52,7 @@ contract FlightSuretyApp {
 
     mapping(address => PendingAirline) public pendingAirlines;
 
-    IFlightSuretyData flightSuretyData;
+    FlightSuretyData fsData;
 
     // Moved to Data contract
     // struct Flight {
@@ -64,9 +71,9 @@ contract FlightSuretyApp {
      * @dev Contract constructor
      *
      */
-    constructor(address flightDataContract) {
+    constructor(address payable flightDataContract) {
         contractOwner = msg.sender;
-        flightSuretyData = IFlightSuretyData(flightDataContract);
+        fsData = FlightSuretyData(flightDataContract);
     }
 
     /********************************************************************************************/
@@ -100,7 +107,7 @@ contract FlightSuretyApp {
      */
     modifier requireAirlineRegistered(address airline) {
         require(
-            flightSuretyData.isAirlineRegistered(airline),
+            fsData.isAirlineRegistered(airline),
             "Airline is not registered."
         );
         _;
@@ -110,7 +117,7 @@ contract FlightSuretyApp {
      */
     modifier requireAirlineNotRegistered(address airline) {
         require(
-            !flightSuretyData.isAirlineRegistered(airline),
+            !fsData.isAirlineRegistered(airline),
             "Airline is already registered."
         );
         _;
@@ -120,10 +127,7 @@ contract FlightSuretyApp {
      * @dev Modifier that requires an Airline to be funded
      */
     modifier requireAirlineFunded(address airline) {
-        require(
-            flightSuretyData.isAirlineFunded(airline),
-            "Airline is not funded."
-        );
+        require(fsData.isAirlineFunded(airline), "Airline is not funded.");
         _;
     }
 
@@ -132,15 +136,15 @@ contract FlightSuretyApp {
      */
     modifier requireAirlineNotFunded(address airline) {
         require(
-            !flightSuretyData.isAirlineFunded(airline),
-            "Airline is already funded."
+            !fsData.isAirlineFunded(airline),
+            "Airline is already funded. data"
         );
         _;
     }
 
     modifier requireFlightRegistered(bytes32 flightKey) {
         require(
-            flightSuretyData.isFlightRegistered(flightKey),
+            fsData.isFlightRegistered(flightKey),
             "Flight is not registered."
         );
         _;
@@ -151,7 +155,7 @@ contract FlightSuretyApp {
      */
     modifier requireFlightNotRegistered(bytes32 flightKey) {
         require(
-            !flightSuretyData.isFlightRegistered(flightKey),
+            !fsData.isFlightRegistered(flightKey),
             "Flight is already registered."
         );
         _;
@@ -159,7 +163,7 @@ contract FlightSuretyApp {
 
     modifier requireFlightNotLanded(bytes32 flightKey) {
         require(
-            !flightSuretyData.hasFlightLanded(flightKey),
+            !fsData.hasFlightLanded(flightKey),
             "Flight has already landed"
         );
         _;
@@ -187,7 +191,7 @@ contract FlightSuretyApp {
         address passenger
     ) {
         require(
-            !flightSuretyData.isPassengerInsuredForFlight(flightKey, passenger),
+            !fsData.isPassengerInsuredForFlight(flightKey, passenger),
             "Passenger is already insured for flight"
         );
         _;
@@ -215,7 +219,7 @@ contract FlightSuretyApp {
      */
     function setOperatingStatus(bool mode) external requireContractOwner {
         operational = mode;
-        flightSuretyData.setOperatingStatus(mode);
+        fsData.setOperatingStatus(mode);
     }
 
     /********************************************************************************************/
@@ -228,9 +232,33 @@ contract FlightSuretyApp {
      */
     function registerAirline(address newAirlineAddress)
         external
-        requireAirlineFunded(newAirlineAddress)
+        requireIsOperational
+        requireAirlineNotRegistered(newAirlineAddress)
+        requireAirlineFunded(msg.sender)
+        returns (bool success, uint256 votes)
     {
-        flightSuretyData.registerAirline(newAirlineAddress);
+        uint256 airlineCount = fsData.fundedAirlineNo();
+        uint256 votesNeeded = airlineCount.div(2);
+
+        if (airlineCount < AIRLINE_MIN_THRESHOLD) {
+            fsData.registerAirline(newAirlineAddress, msg.sender);
+            return (true, 1);
+        } else {
+            // Do multisignature
+            bool isDuplicate = multiCalls[msg.sender];
+            require(!isDuplicate, "Caller has already called this function");
+            multiCalls[msg.sender] = true;
+            multiCallKeys.push(msg.sender);
+            if (multiCallKeys.length >= votesNeeded) {
+                fsData.registerAirline(newAirlineAddress, msg.sender);
+                for (uint256 i = 0; i < multiCallKeys.length; ++i) {
+                    multiCalls[multiCallKeys[i]] = false;
+                }
+                multiCallKeys = new address[](0);
+                return (true, votesNeeded);
+            }
+            return (false, multiCallKeys.length);
+        }
     }
 
     /**
@@ -241,10 +269,9 @@ contract FlightSuretyApp {
         external
         requireIsOperational
         requireAirlineRegistered(airline)
-        returns (bool)
+        requireAirlineNotFunded(airline)
     {
-        bool funded = flightSuretyData.fundAirline(airline, amount);
-        return funded;
+        fsData.fundAirline(airline, amount);
     }
 
     /**
@@ -463,69 +490,66 @@ contract FlightSuretyApp {
 }
 
 // Contract that is already deployed
-interface IFlightSuretyData {
-    function isOperational() external view returns (bool);
+// interface IFlightSuretyData {
+//     function isOperational() external view returns (bool);
 
-    function setOperatingStatus(bool mode) external;
+//     function setOperatingStatus(bool mode) external;
 
-    function isAirlineRegistered(address airline) external view returns (bool);
+//     function isAirlineRegistered(address airline) external view returns (bool);
 
-    function isAirlineFunded(address airline) external view returns (bool);
+//     function isAirlineFunded(address airline) external view returns (bool);
 
-    function isFlightRegistered(bytes32 flightKey) external view returns (bool);
+//     function isFlightRegistered(bytes32 flightKey) external view returns (bool);
 
-    function hasFlightLanded(bytes32 flightKey) external view returns (bool);
+//     function hasFlightLanded(bytes32 flightKey) external view returns (bool);
 
-    function isPassengerInsuredForFlight(bytes32 flightKey, address passenger)
-        external
-        view
-        returns (bool);
+//     function isPassengerInsuredForFlight(bytes32 flightKey, address passenger)
+//         external
+//         view
+//         returns (bool);
 
-    function registerAirline(address newAirline) external;
+//     function registerAirline(address newAirline) external;
 
-    function fundAirline(address airline, uint256 amount)
-        external
-        payable
-        returns (bool);
+//     function fundAirline(address airline, uint256 amount) external;
 
-    function getRegisteredAirlineCount() external view returns (uint256);
+//     function getRegisteredAirlineCount() external view returns (uint256);
 
-    function getFundedAirlineCount() external view returns (uint256);
+//     function getFundedAirlineCount() external view returns (uint256);
 
-    function registerFlight(
-        bytes32 flightKey,
-        uint256 timestamp,
-        address airline,
-        string memory flightNumber,
-        string memory departureLocation,
-        string memory arrivalLocation
-    ) external payable;
+//     function registerFlight(
+//         bytes32 flightKey,
+//         uint256 timestamp,
+//         address airline,
+//         string memory flightNumber,
+//         string memory departureLocation,
+//         string memory arrivalLocation
+//     ) external payable;
 
-    function getCountRegisteredFlights() external view returns (uint256);
+//     function getCountRegisteredFlights() external view returns (uint256);
 
-    function processFlightStatus(
-        address airline,
-        string calldata flight,
-        uint256 timestamp,
-        uint8 statusCode
-    ) external;
+//     function processFlightStatus(
+//         address airline,
+//         string calldata flight,
+//         uint256 timestamp,
+//         uint8 statusCode
+//     ) external;
 
-    function buyInsurance(
-        bytes32 flightKey,
-        address passenger,
-        uint256 amount,
-        uint256 payout
-    ) external payable;
+//     function buyInsurance(
+//         bytes32 flightKey,
+//         address passenger,
+//         uint256 amount,
+//         uint256 payout
+//     ) external payable;
 
-    function creditInsurees(bytes32 flightKey) external;
+//     function creditInsurees(bytes32 flightKey) external;
 
-    function pay(address payable payoutAddress) external;
+//     function pay(address payable payoutAddress) external;
 
-    function getFlightKey(
-        address airline,
-        string memory flight,
-        uint256 timestamp
-    ) external pure returns (bytes32);
+//     function getFlightKey(
+//         address airline,
+//         string memory flight,
+//         uint256 timestamp
+//     ) external pure returns (bytes32);
 
-    function fund() external payable;
-}
+//     function fund() external payable;
+// }

@@ -13,21 +13,19 @@ contract FlightSuretyData {
     address private contractOwner; // Account used to deploy contract
     bool private operational = true; // Blocks all state changes throughout the contract if false
 
-    mapping(address => bool) AuthorizedCallers; //AUTHORIZED CALLERS
+    // mapping(address => bool) AuthorizedCallers; //AUTHORIZED CALLERS
 
     // AIRLINE DATA
     struct Airline {
         bool isRegistered;
-        bool isFund;
+        bool isFunded;
         uint256 funds;
-
-        // string airlineName;
     }
 
-    uint256 registeredAirlineNo = 0;
-    uint256 fundedAirlineNo = 0;
-
     mapping(address => Airline) airlines;
+
+    uint256 public registeredAirlineNo = 0;
+    uint256 public fundedAirlineNo = 0;
 
     // Flight Data
     struct Flight {
@@ -130,11 +128,11 @@ contract FlightSuretyData {
         _;
     }
     modifier requireAirlineFunded(address airline) {
-        require(airlines[airline].isFund, "Airline is not funded Data");
+        require(airlines[airline].isFunded, "Airline is not funded Data");
         _;
     }
     modifier requireAirlineNotFunded(address airline) {
-        require(!airlines[airline].isFund, "Airline is already funded");
+        require(!airlines[airline].isFunded, "Airline is already funded");
         _;
     }
 
@@ -174,11 +172,11 @@ contract FlightSuretyData {
      *      Can only be called from FlightSuretyApp contract
      *
      */
-    function registerAirline(address newAirline)
+    function registerAirline(address newAirline, address signingAirline)
         external
         requireIsOperational
         requireAirlineNotRegistered(newAirline)
-        requireAirlineFunded(msg.sender)
+        requireAirlineFunded(signingAirline)
     {
         airlines[newAirline] = Airline(true, false, 0);
         registeredAirlineNo = registeredAirlineNo.add(1);
@@ -191,15 +189,16 @@ contract FlightSuretyData {
      *
      */
     function fundAirline(address airline, uint256 amount)
-        external
-        payable
+        public
         requireIsOperational
         requireAirlineRegistered(airline)
         requireAirlineNotFunded(airline)
         requireAirlineFee(amount)
     {
+        // operational = false;
         airlines[airline].funds = airlines[airline].funds.add(amount);
-        airlines[airline].isFund = true;
+        airlines[airline].isFunded = true;
+
         fundedAirlineNo = fundedAirlineNo.add(1);
 
         emit AirlineFunded(airline);
@@ -279,7 +278,7 @@ contract FlightSuretyData {
     }
 
     function isAirlineFunded(address airline) public view returns (bool) {
-        return airlines[airline].isFund;
+        return airlines[airline].isFunded;
     }
 
     function isFlightRegistered(bytes32 flightKey) public view returns (bool) {

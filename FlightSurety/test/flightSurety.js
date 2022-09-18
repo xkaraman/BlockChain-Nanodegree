@@ -6,7 +6,12 @@ contract('Flight Surety Tests', async (accounts) => {
 
     var config;
     before('setup contract', async () => {
+        console.log(web3.version)
+        web3.eth.handleRevert = true
         config = await Test.Config(accounts);
+        console.log(config.flightSuretyData.address)
+        console.log(config.flightSuretyApp.address)
+
         // await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
     });
 
@@ -17,7 +22,7 @@ contract('Flight Surety Tests', async (accounts) => {
     it(`(multiparty) has correct initial isOperational() value`, async function () {
 
         // Get operating status
-        let status = await config.flightSuretyData.isOperational.call();
+        let status = await config.flightSuretyApp.isOperational.call();
         assert.equal(status, true, "Incorrect initial operating status value");
 
     });
@@ -55,8 +60,10 @@ contract('Flight Surety Tests', async (accounts) => {
         await config.flightSuretyData.setOperatingStatus(false);
 
         let reverted = false;
+        let newAirline = accounts[2];
+
         try {
-            await config.flightSurety.setTestingMode(true);
+            await config.flightSuretyData.registerAirline(newAirline, { from: config.firstAirline });
         }
         catch (e) {
             reverted = true;
@@ -87,26 +94,47 @@ contract('Flight Surety Tests', async (accounts) => {
 
     });
 
-    // it('(airline) Fund an airline', async () => {
-    //     // ARRANGE
-    //     let amount = web3.utils.toWei("10", "ether");
+    it('(airline) Fund an airline with less than 10 ether', async () => {
+        // ARRANGE
+        let amount = web3.utils.toWei("5", "ether");
 
-    //     // ACT
-    //     try {
-    //         response = await config.flightSuretyApp.fundAirline(config.firstAirline, amount, { from: config.firstAirline, gas: 300000 });
-    //     }
-    //     catch (e) {
-    //         console.log("funding error: ", e)
-    //     }
+        await config.flightSuretyApp.fundAirline(config.firstAirline, amount, { from: config.firstAirline, gas: 100000 })
+            // .on('error', (e) => { console.log("funding error: ", e) })
+            .then((response) => { console.log("Response received") })
+            .catch((err) => { })
 
-    //     let result = await config.flightSuretyData.isAirlineFunded.call(config.firstAirline, { from: config.firstAirline, gas: 3000000, gasPrice: 500000000 });
-    //     // console.log(result)
-    //     // console.log(response)
+        let result = await config.flightSuretyData.isAirlineFunded.call(config.firstAirline);
 
-    //     // ASSERT
-    //     assert.equal(result, true, "Airline should be funded");
+        // ASSERT
+        assert.equal(result, false, "Airline must pay > 10 ether for funding");
 
-    // });
+    });
+
+    it('(airline) Fund an airline with 10 ether', async () => {
+        // ARRANGE
+        let amount = web3.utils.toWei("10", "ether");
+
+        // ACT
+        // console.log(config.flightSuretyApp.methods)
+
+        await config.flightSuretyApp.fundAirline(config.firstAirline, amount, { from: config.firstAirline, gas: 100000 })
+            .then((response) => { console.log("Response received") })
+        // .catch((err) => { console.log("funding error: ") })
+
+
+        // await config.flightSuretyData.setOperatingStatus(true)
+        //     .then((response) => { console.log("Response received") })
+        //     .catch((err) => { console.log("funding error: ", err) })
+
+        let result = await config.flightSuretyData.isAirlineFunded.call(config.firstAirline);
+        // console.log(result)
+        // console.log(response)
+
+        // ASSERT
+        assert.equal(result, true, "Airline should be funded");
+
+    });
+
 
     it('(airline) can register an Airline using registerAirline() if is funded', async () => {
 
@@ -116,25 +144,78 @@ contract('Flight Surety Tests', async (accounts) => {
         let amount = web3.utils.toWei("10", "ether");
 
 
-        config.flightSuretyApp.fundAirline(config.firstAirline, amount, { from: config.firstAirline, gas: 5000000, gasPrice: 500000000 })
-            .on('error', (e) => { console.log("fund error ", e) })
-            .then((receipt) => {
-                console.log("fund receipt", receipt)
-            })
-            .catch((e) => { "fund error", console.log(e) });
+        // config.flightSuretyApp.fundAirline(config.firstAirline, amount, { from: config.firstAirline })
+        //     .then((receipt) => {
+        //         console.log("fund receipt", receipt)
+        //     })
+        //     .catch((e) => { "fund error", console.log(e) });
 
         // ACT
-        config.flightSuretyApp.registerAirline(newAirline, { from: config.firstAirline, gas: 5000000, gasPrice: 500000000 })
-            .on('error', (e) => { console.log("register error ", e) })
+        await config.flightSuretyApp.registerAirline(newAirline, { from: config.firstAirline })
             .then((receipt) => {
-                console.log("register receipt", receipt)
+                console.log("register receipt", receipt.status)
             })
             .catch((e) => { console.log("register error ", e) });
 
 
-        result = await config.flightSuretyData.isAirlineRegistered.call(newAirline, { from: config.firstAirline, gas: 5000000, gasPrice: 500000000 });
-
+        result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+        console.log("Is airlined resutl", result);
         // ASSERT
-        assert.equal(result, true, "Airline should be registred when funded");
+        assert.equal(result, true, "New airline should be registred when an already funded airline add them");
+    });
+
+    it('(airline) Register an airline when already four are in', async () => {
+        // ARRANGE
+        // 2 are already funded from previous tests
+        let newAirline = accounts[2];
+        let otherAirline = accounts[3];
+        let anotherAirline = accounts[4];
+        let amount = web3.utils.toWei("10", "ether");
+
+        await config.flightSuretyApp.registerAirline(otherAirline, { from: config.firstAirline })
+            .then((receipt) => {
+                console.log("register receipt", receipt.status)
+            })
+            .catch((e) => { console.log("register error ", e) });
+
+        await config.flightSuretyApp.registerAirline(anotherAirline, { from: config.firstAirline })
+            .then((receipt) => {
+                console.log("register receipt", receipt.status)
+            })
+            .catch((e) => { console.log("register error ", e) });
+
+        await config.flightSuretyApp.fundAirline(newAirline, amount, { from: newAirline, gas: 100000 })
+            .then((response) => { console.log("Response received") })
+
+        await config.flightSuretyApp.fundAirline(otherAirline, amount, { from: otherAirline, gas: 100000 })
+            .then((response) => { console.log("Response received") })
+
+        await config.flightSuretyApp.fundAirline(anotherAirline, amount, { from: anotherAirline, gas: 100000 })
+            .then((response) => { console.log("Response received") })
+
+
+        let maxAirlines = 4;
+
+        let count = await config.flightSuretyData.fundedAirlineNo.call();
+        assert(count >= 4, "Funded airlines are not enough");
+
+        for (let i = 0; i < maxAirlines; i++) {
+            let multiapartyAirline = accounts[i + 5];
+            let count = await config.flightSuretyData.fundedAirlineNo.call();
+            let votesNeeded = Math.ceil(count / 2);
+            for (let k = 0; k < votesNeeded; ++k) {
+                await config.flightSuretyApp.registerAirline(multiapartyAirline, { from: accounts[k + 1] })
+                    .then((receipt) => {
+                        console.log("register receipt", receipt.status)
+                    })
+                    .catch((e) => { console.log("register error ", e) });;
+                let result = await config.flightSuretyData.isAirlineRegistered.call(multiapartyAirline);
+                assert.equal(result, k === (votesNeeded - 1), "multi-party consensus failed");
+            }
+        }
+
+
+
+
     });
 });
