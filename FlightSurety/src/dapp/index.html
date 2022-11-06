@@ -5,11 +5,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>FlightSurety</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.2/assets/css/docs.css" rel="stylesheet">
+    <title>Bootstrap Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 
 <body>
+
+
 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">FlightSurety</a>
@@ -18,40 +25,184 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <button class="enableEthereumButton">Enable Ethereum</button>
-        <h2>Account: <span class="showAccount"></span></h2>
+        <h2 style="color: white;">Account: <span class="showAccount"></span></h2>
     </nav>
 
     <main class="container">
 
+        <table class="table table-dark" id="flights-display">
+            <thead>
+                <tr>
+                    <th scope="col">Flight</th>
+                    <th scope="col">Destination</th>
+                    <th scope="col">Departure Time</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="row top-20">
+            <div class="col top-20">
+                <h2> Airline Section</h2>
+                <div class="col g-2 ">
+                    <h4 class=" col-md top-20">
+                        <label>Register Airlines</label>
+                    </h4>
+
+                    <div class="col-md top-20">
+                        <label>Airline Address</label>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="airline_address"
+                                placeholder="Give Airline address">
+                            <label for="floatingInput">Airline Address</label>
+                        </div>
+                    </div>
+
+                    <div class=" col-md top-20">
+                        <label>Airline Name</label>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="airline_name"
+                                placeholder="Airline Name: 'Wipp'">
+                            <label for="floatingInput">Airline Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md top-20">
+                        <btn class="btn btn-primary" id="submit-airline">Register Airline</btn>
+                    </div>
+                </div>
+
+                <div class="form-row top-20">
+                    <h4>Airline Actions</h4>
+                    <!-- <input type="text" id="airline-fund-address" style="width: 400px;" placeholder="Airline Address"> -->
+                    <btn class="btn btn-primary" id="fund-airlines">Fund</btn>
+                    <btn class="btn btn-primary" id="vote-airlines">Vote</btn>
+                    <btn class="btn btn-primary" id="is-registered">Is Registered</btn>
+                    <btn class="btn btn-primary" id="is-funded">Is Funded</btn>
+
+                    <div class="col top-20">
+                        <btn class="btn btn-primary" id="airlines-registered">No Of Registerd
+                            Airlines:
+                        </btn>
+                        <input type="text" readonly id="noOfArilines"></input>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col top-20">
+                <h2> Flights Registration</h2>
+                <div class="form-row top-20">
+                    <h4>Register Flight</h4>
+
+                    <div class="col-md top-20">
+                        <label>Flight Number</label>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="flight_number" placeholder="Flight Number">
+                            <label for="floatingInput">Flight Number</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md top-20">
+                        <label>Flight Origin</label>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="flight_origin" placeholder="Flight Origin">
+                            <label for="floatingInput">Flight Origin</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md top-20">
+                        <label>Flight Destination</label>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="flight_destination"
+                                placeholder=" Flight Destination">
+
+                            <label for="floatingInput">Flight Destination</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md top-20">
+                        <btn class="btn btn-primary" id="submit_flight">Submit Flight</btn>
+                    </div>
+
+                </div>
+
+                <div class="form-row top-20">
+                    <btn class="btn btn-primary" id="flights-registered">Flights No:</btn>
+                    <input type="text" readonly id="noOfFlights"></input>
+                </div>
+            </div>
+        </div>
+        <!-- <btn class="btn btn-primary" id="is-pending" style="margin-left: 10px;">Is Pending</btn> -->
+
+        <hr>
+
+        <h2> Passenger Actions</h2>
+        <div class="row">
+            <div class="form-group col-md-4">
+
+                <select class="form-select" id="flight_selection" aria-label="Default select example">
+                    <option selected>Select Flight</option>
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+                <input type="text" id="insurance_cost" placeholder="Max 1 Ether">
+            </div>
+            <div class="form-group col-md-2">
+                <btn class="btn btn-primary" id="buy-insurance">Buy insurance
+                </btn>
+            </div>
+
+            <div class="form-row top-20">
+                <input type="text" readonly id="available_credit" style="width: 200px;"
+                    placeholder="Balance will appear here">
+                <btn class="btn btn-primary" id="get-balance" style="margin-left: 10px;">Get balance</btn>
+                <btn class="btn btn-primary" id="withrdaw-balance" style="margin-left: 10px;">Withrdaw balance</btn>
+            </div>
+        </div>
+
+        <hr>
+        <h2> Oracle Requests</h2>
+
+        <div class="row">
+            <div class="form-group col-md-4">
+
+                <select class="form-select" id="flight_selection_1" aria-label="Default select example">
+                    <option selected>Select Flight</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm">
+                <label>Flight Timestamp</label>
+                <input type="text" class="form-control" id="selected-flight-timestamp" placeholder="Name">
+            </div>
+            <div class="col-sm">
+                <label>Airline address</label>
+                <input type="text" class="form-control" id="selected-airline-address">
+            </div>
+
+            <div class="col-sm">
+                <label>Flight Number</label>
+                <input type="text" class="form-control" id="selected-flight-number" placeholder="Flight"
+                    onkeyup="this.value = this.value.toUpperCase();">
+            </div>
+        </div>
+
+        <div class="row-sm top-20">
+            <button class="btn btn-primary" id="submit-oracle">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" id="oracles-spinner"
+                    hidden></span>
+                Submit to Oracles
+            </button>
+        </div>
+
+
 
         <div id="display-wrapper" class="top-20"></div>
 
-        <h2> Airline Registration</h2>
-        <div class="row top-20">
-            <label class="form">Register Airlines</label>
-            <input type="text" id="airline_address" style="width: 400px;" placeholder="Give Airline address">
-            <!-- <input type="text" id="airline-address" style="width: 400px;" placeholder="Airline Address"> -->
-
-            <btn class="btn btn-primary" id="submit-airline">Register Airline</btn>
-        </div>
-
-        <div class="row top-20">
-            <label class="form">Airline Actions</label>
-            <!-- <input type="text" id="airline-fund-address" style="width: 400px;" placeholder="Airline Address"> -->
-            <btn class="btn btn-primary" id="fund-airlines">Fund</btn>
-            <btn class="btn btn-primary" id="vote-airlines" style="margin-left: 10px;">Vote</btn>
-            <btn class="btn btn-primary" id="is-registered" style="margin-left: 10px;">Is Registered</btn>
-            <btn class="btn btn-primary" id="is-funded" style="margin-left: 10px;">Is Funded</btn>
-            <!-- <btn class="btn btn-primary" id="is-pending" style="margin-left: 10px;">Is Pending</btn> -->
-        </div>
-
-        <div class="row top-20">
-            <label class="form">Flight</label> <select type="text" id="flight-number"></select>
-            <btn class="btn btn-primary" id="buy-insurance">Buy insurance</btn>
-            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-            <btn class="btn btn-primary" id="withdraw-credit">Withdraw credit</btn>
-            <btn class="btn btn-primary" id="get-balance">Get balance</btn>
-        </div>
     </main>
 
 </body>
