@@ -30,7 +30,7 @@ module.exports = function (deployer) {
         },
     ]
 
-    deployer.deploy(FlightSuretyData, firstAirline)
+    deployer.deploy(FlightSuretyData)
         .then(() => {
             return deployer.deploy(FlightSuretyApp, FlightSuretyData.address)
                 .then(() => {
