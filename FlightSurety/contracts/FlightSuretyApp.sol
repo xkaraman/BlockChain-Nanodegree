@@ -5,8 +5,9 @@ pragma solidity >=0.8.0 <=0.8.17;
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./Structs.sol";
 
-import "./FlightSuretyData.sol";
+// import "./FlightSuretyData.sol";
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -173,7 +174,10 @@ contract FlightSuretyApp {
      * @dev Modifier that requires sufficient funding to fund an airline
      */
     modifier requireSufficientFunding(uint256 amount) {
-        require(msg.value >= amount, "Insufficient Funds.");
+        require(
+            amount >= AIRLINE_REGISTRATION_FEE,
+            "Insufficient Registration Fee."
+        );
         _;
     }
 
@@ -230,7 +234,10 @@ contract FlightSuretyApp {
      * @dev Add an airline to the registration queue
      *
      */
-    function registerAirline(address newAirlineAddress)
+    function registerAirline(
+        address newAirlineAddress,
+        string memory airlineName
+    )
         external
         requireIsOperational
         requireAirlineNotRegistered(newAirlineAddress)
@@ -241,7 +248,7 @@ contract FlightSuretyApp {
         uint256 votesNeeded = airlineCount.div(2);
 
         if (airlineCount < AIRLINE_MIN_THRESHOLD) {
-            fsData.registerAirline(newAirlineAddress, msg.sender);
+            fsData.registerAirline(newAirlineAddress, airlineName, msg.sender);
             return (true, 1);
         } else {
             // Do multisignature
@@ -250,7 +257,11 @@ contract FlightSuretyApp {
             multiCalls[msg.sender] = true;
             multiCallKeys.push(msg.sender);
             if (multiCallKeys.length >= votesNeeded) {
-                fsData.registerAirline(newAirlineAddress, msg.sender);
+                fsData.registerAirline(
+                    newAirlineAddress,
+                    airlineName,
+                    msg.sender
+                );
                 for (uint256 i = 0; i < multiCallKeys.length; ++i) {
                     multiCalls[multiCallKeys[i]] = false;
                 }
@@ -265,20 +276,96 @@ contract FlightSuretyApp {
      * @dev Fund an airline to the registration queue
      *
      */
-    function fundAirline(address airline, uint256 amount)
+    function fundAirline()
         external
+        payable
         requireIsOperational
-        requireAirlineRegistered(airline)
-        requireAirlineNotFunded(airline)
+        requireAirlineRegistered(msg.sender)
+        requireAirlineNotFunded(msg.sender)
+        requireSufficientFunding(msg.value)
     {
-        fsData.fundAirline(airline, amount);
+        fsData.fundAirline{value: msg.value}(msg.sender, msg.value);
     }
 
     /**
      * @dev Register a future flight for insuring.
      *
      */
-    function registerFlight() external pure {}
+    function registerFlight(
+        string memory flight_number,
+        string memory origin,
+        string memory destination,
+        uint256 timestamp
+    ) external requireIsOperational {
+        fsData.registerFlight(
+            msg.sender,
+            flight_number,
+            origin,
+            destination,
+            timestamp
+        );
+    }
+
+    function buyInsurance(
+        // address airline,
+        // string memory flightNumber,
+        // uint256 timestamp,
+        // uint256 payout
+        // uint256 amount
+        // address passenger
+
+        bytes32 flightKey
+    )
+        external
+        payable
+        requireIsOperational
+        requireLessThanMaxInsurance
+        requirePassengerNotInsuredForFlight(flightKey, msg.sender)
+    {
+        // bytes32 flightKey = getFlightKey(airline, flightNumber, timestamp);
+        fsData.buyInsurance(flightKey, msg.sender, msg.value, INSURANCE_PAYOUT);
+    }
+
+    function creditInsurees(bytes32 flightKey) internal requireIsOperational {
+        fsData.creditInsurees(flightKey);
+    }
+
+    // Returns a list of Flights that are currently registered
+    function getAvailableFlights()
+        external
+        view
+        requireIsOperational
+        returns (Flight[] memory)
+    {
+        // uint256 flightSize = fsData.registeredFlightsNo();
+        // Flight[] memory flights = new Flight[](flightSize);
+
+        // flights[key].isRegistered = true;
+        // flights[key].isClosed = false;
+        // flights[key].airline = airline;
+        // flights[key].flightNumber = flight_number;
+        // flights[key].origin = origin;
+        // flights[key].destination = destination;
+        // flights[key].departureTime = timestamp;
+        // flights[key].statusCode = 0;
+        // Flight(
+        //     true,
+        //     false,
+        //     0xf17f52151EbEF6C7334FAD080c5704D77216b732,
+        //     "asd",
+        //     "origin",
+        //     "destination",
+        //     454654454656456,
+        //     0
+        // );
+        // flights[0] = ;
+        // for (uint256 i = 0; i < flightSize; ++i) {
+        //     bytes32 flightKey = fsData.registeredFlights(i);
+        //     Flight memory flight = fsData.flights(flightKey);
+        //     flights[i] = flight;
+        // }
+        return fsData.getAvailableFlights();
+    }
 
     /**
      * @dev Called after oracle has updated flight status
@@ -289,7 +376,12 @@ contract FlightSuretyApp {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal pure {}
+    ) internal {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            creditInsurees(flightKey);
+        }
+    }
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus(
@@ -306,14 +398,15 @@ contract FlightSuretyApp {
 
         // Check this for error fix
         // https://stackoverflow.com/questions/71693977/solidity-error-version-0-8-0-struct-containing-a-nested-mapping-cannot-be-c
-        ResponseInfo storage aResponse = oracleResponses[key];
 
-        aResponse.requester = msg.sender;
-        aResponse.isOpen = true;
+        ResponseInfo storage respInfo = oracleResponses[key];
+        respInfo.requester = msg.sender;
+        respInfo.isOpen = true;
+
         // oracleResponses[key] = ResponseInfo({
-        //                                         requester: msg.sender,
-        //                                         isOpen: true
-        //                                     });
+        //     requester: msg.sender,
+        //     isOpen: true
+        // });
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
@@ -344,13 +437,14 @@ contract FlightSuretyApp {
         address requester; // Account that requested status
         bool isOpen; // If open, oracle responses are accepted
         mapping(uint8 => address[]) responses; // Mapping key is the status code reported
-        // This lets us group responses and identify
-        // the response that majority of the oracles
+        // // This lets us group responses and identify
+        // // the response that majority of the oracles
     }
 
     // Track all oracle responses
     // Key = hash(index, flight, timestamp)
     mapping(bytes32 => ResponseInfo) private oracleResponses;
+    // mapping(bytes32 => mapping(uint8 => address[])) private responsesByType; // Nested mapping per solc 0.7.0
 
     // Event fired each time an oracle submits a response
     event FlightStatusInfo(
@@ -422,6 +516,7 @@ contract FlightSuretyApp {
             "Flight or timestamp do not match oracle request"
         );
 
+        // responsesByType[key][statusCode].push(msg.sender);
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
         // Information isn't considered verified until at least MIN_RESPONSES
@@ -434,6 +529,8 @@ contract FlightSuretyApp {
 
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
+            // In order to be processed just once
+            oracleResponses[key].isOpen = false;
         }
     }
 
@@ -490,66 +587,80 @@ contract FlightSuretyApp {
 }
 
 // Contract that is already deployed
-// interface IFlightSuretyData {
-//     function isOperational() external view returns (bool);
+contract FlightSuretyData {
+    function isOperational() external view returns (bool) {}
 
-//     function setOperatingStatus(bool mode) external;
+    function setOperatingStatus(bool mode) external {}
 
-//     function isAirlineRegistered(address airline) external view returns (bool);
+    function isAirlineRegistered(address airline)
+        external
+        view
+        returns (bool)
+    {}
 
-//     function isAirlineFunded(address airline) external view returns (bool);
+    function isAirlineFunded(address airline) external view returns (bool) {}
 
-//     function isFlightRegistered(bytes32 flightKey) external view returns (bool);
+    function isFlightRegistered(bytes32 flightKey)
+        external
+        view
+        returns (bool)
+    {}
 
-//     function hasFlightLanded(bytes32 flightKey) external view returns (bool);
+    function hasFlightLanded(bytes32 flightKey) external view returns (bool) {}
 
-//     function isPassengerInsuredForFlight(bytes32 flightKey, address passenger)
-//         external
-//         view
-//         returns (bool);
+    function isPassengerInsuredForFlight(bytes32 flightKey, address passenger)
+        external
+        view
+        returns (bool)
+    {}
 
-//     function registerAirline(address newAirline) external;
+    function registerAirline(
+        address newAirline,
+        string memory airline_name,
+        address signingAirline
+    ) external {}
 
-//     function fundAirline(address airline, uint256 amount) external;
+    function fundAirline(address airline, uint256 amount) external payable {}
 
-//     function getRegisteredAirlineCount() external view returns (uint256);
+    function fundedAirlineNo() public pure returns (uint256) {}
 
-//     function getFundedAirlineCount() external view returns (uint256);
+    function getRegisteredAirlineCount() external view returns (uint256) {}
 
-//     function registerFlight(
-//         bytes32 flightKey,
-//         uint256 timestamp,
-//         address airline,
-//         string memory flightNumber,
-//         string memory departureLocation,
-//         string memory arrivalLocation
-//     ) external payable;
+    function getFundedAirlineCount() external view returns (uint256) {}
 
-//     function getCountRegisteredFlights() external view returns (uint256);
+    function registerFlight(
+        address airline,
+        string memory flight_number,
+        string memory origin,
+        string memory destination,
+        uint256 timestamp
+    ) external {}
 
-//     function processFlightStatus(
-//         address airline,
-//         string calldata flight,
-//         uint256 timestamp,
-//         uint8 statusCode
-//     ) external;
+    function getAvailableFlights() external view returns (Flight[] memory) {}
 
-//     function buyInsurance(
-//         bytes32 flightKey,
-//         address passenger,
-//         uint256 amount,
-//         uint256 payout
-//     ) external payable;
+    // function getCountRegisteredFlights() external view returns (uint256) {}
+    function registeredFlightsNo() external view returns (uint256) {}
 
-//     function creditInsurees(bytes32 flightKey) external;
+    function registeredFlights(uint256) external view returns (bytes32) {}
 
-//     function pay(address payable payoutAddress) external;
+    function flights(bytes32) external view returns (Flight memory) {}
 
-//     function getFlightKey(
-//         address airline,
-//         string memory flight,
-//         uint256 timestamp
-//     ) external pure returns (bytes32);
+    function buyInsurance(
+        bytes32 flightKey,
+        address passenger,
+        uint256 amount,
+        uint256 payout
+    ) external payable {}
 
-//     function fund() external payable;
-// }
+    function creditInsurees(bytes32 flightKey) external {}
+
+    function pay(address payable payoutAddress) external {}
+
+    function getFlightKey(
+        address airline,
+        string memory flight,
+        uint256 timestamp
+    ) external pure returns (bytes32) {}
+
+    function fund() external payable {}
+}
